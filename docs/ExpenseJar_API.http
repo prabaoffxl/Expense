@@ -1,0 +1,167 @@
+### ExpenseJar REST API Test File (HTTP Client format)
+### Host: http://localhost:8080
+
+###############################################################################
+# 1. USER ENDPOINTS
+###############################################################################
+
+### Create User 1 (Alice)
+POST http://localhost:8080/api/users
+Content-Type: application.json
+
+{
+  "name": "Alice Smith",
+  "email": "alice@example.com"
+}
+
+### Create User 2 (Bob)
+POST http://localhost:8080/api/users
+Content-Type: application.json
+
+{
+  "name": "Bob Jones",
+  "email": "bob@example.com"
+}
+
+### Get User by ID
+GET http://localhost:8080/api/users/1
+
+### Get All Users
+GET http://localhost:8080/api/users
+
+### Update User
+PUT http://localhost:8080/api/users/1
+Content-Type: application/json
+
+{
+  "name": "Alice Smith Updated",
+  "email": "alice.updated@example.com"
+}
+
+###############################################################################
+# 2. CATEGORY ENDPOINTS
+###############################################################################
+
+### Create Category (Food)
+POST http://localhost:8080/api/categories
+Content-Type: application/json
+
+{
+  "name": "Food"
+}
+
+### Get All Categories
+GET http://localhost:8080/api/categories
+
+###############################################################################
+# 3. BUDGET ENDPOINTS
+###############################################################################
+
+### Set Monthly Budget (User 1, Category 1 - Food: Limit 500.00)
+PUT http://localhost:8080/api/budgets
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 1,
+  "monthlyLimit": 500.00
+}
+
+### Set Monthly Budget (User 1, Category 2 - Travel: Limit 200.00)
+PUT http://localhost:8080/api/budgets
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 2,
+  "monthlyLimit": 200.00
+}
+
+### Get Budgets by User ID
+GET http://localhost:8080/api/budgets/user/1
+
+###############################################################################
+# 4. EXPENSE ENDPOINTS
+###############################################################################
+
+### Add Expense 1 (User 1, Category 1 - Food: 250.00 - Normal 50%)
+POST http://localhost:8080/api/expenses
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 1,
+  "amount": 250.00,
+  "expenseDate": "2026-09-02",
+  "description": "Pantry groceries"
+}
+
+### Add Expense 2 (User 1, Category 1 - Food: 210.00 - Triggers 92% WARNING Alert!)
+POST http://localhost:8080/api/expenses
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 1,
+  "amount": 210.00,
+  "expenseDate": "2026-09-15",
+  "description": "Weekend dinner party"
+}
+
+### Add Expense 3 (User 1, Category 3 - Stationery: 110.00 - Triggers 110% EXCEEDED Alert!)
+POST http://localhost:8080/api/expenses
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 3,
+  "amount": 110.00,
+  "expenseDate": "2026-09-12",
+  "description": "Drawing kit and textbook"
+}
+
+### Filter Expenses (Search with Pagination & Sorting)
+GET http://localhost:8080/api/expenses?userId=1&categoryId=1&page=0&size=5&sortBy=expenseDate&sortDir=DESC
+
+###############################################################################
+# 5. SUMMARY, ALERTS, TRENDS & DASHBOARD ENDPOINTS
+###############################################################################
+
+### Current Month Summary for User 1
+GET http://localhost:8080/api/users/1/summary/current-month
+
+### Active Budget Alerts (>90% spend) for User 1
+GET http://localhost:8080/api/users/1/alerts
+
+### Month-over-Month Spending Trend (Last 6 Months) for User 1
+GET http://localhost:8080/api/users/1/trend?months=6
+
+### Overall Backend Dashboard Statistics
+GET http://localhost:8080/api/dashboard
+
+###############################################################################
+# 6. EDGE CASES & ERROR TESTING (400, 404, 409)
+###############################################################################
+
+### Test Negative Amount (Returns 400 Bad Request)
+POST http://localhost:8080/api/expenses
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "categoryId": 1,
+  "amount": -50.00,
+  "expenseDate": "2026-09-15"
+}
+
+### Test Non-existent User (Returns 404 Not Found)
+GET http://localhost:8080/api/users/999/summary/current-month
+
+### Test Duplicate User Email (Returns 409 Conflict)
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "Alice Duplicate",
+  "email": "alice@example.com"
+}

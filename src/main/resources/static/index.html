@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseJar - Personal Expense Tracker Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-brand { font-weight: 700; letter-spacing: 0.5px; }
+        .card-stat { border: none; border-radius: 12px; transition: transform 0.2s; }
+        .card-stat:hover { transform: translateY(-3px); }
+        .progress { height: 18px; border-radius: 9px; }
+        .badge-status-NORMAL { background-color: #198754; }
+        .badge-status-WARNING { background-color: #fd7e14; }
+        .badge-status-EXCEEDED { background-color: #dc3545; }
+        .badge-status-NO_BUDGET { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#">
+                <i class="fa-solid fa-jar-wheat me-2"></i>ExpenseJar Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard"><i class="fa-solid fa-gauge me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/swagger-ui.html" target="_blank"><i class="fa-solid fa-code me-1"></i> Swagger API Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="/h2-console" target="_blank"><i class="fa-solid fa-database me-1"></i> H2 DB Console</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid px-4 mb-5">
+        
+        <!-- User Selection Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+            <div>
+                <h4 class="mb-0 fw-bold text-secondary"><i class="fa-solid fa-user-circle me-2 text-primary"></i>Expense Tracker Dashboard</h4>
+                <small class="text-muted">Personal expense monitoring & monthly budget alerting (INR ₹)</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <label for="userSelect" class="form-label me-2 mb-0 fw-semibold">Select User:</label>
+                <select id="userSelect" class="form-select w-auto" onchange="loadDashboardData()">
+                    <!-- Dynamically Loaded -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Top Statistics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat bg-primary text-white shadow-sm p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-white-50 text-uppercase fw-bold">All-Time Total Spend</small>
+                            <h3 class="fw-bold mb-0 mt-1" id="statAllTimeSpent">₹0.00</h3>
+                        </div>
+                        <i class="fa-solid fa-indian-rupee-sign fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-success text-white shadow-sm p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-white-50 text-uppercase fw-bold">Current Month Spend</small>
+                            <h3 class="fw-bold mb-0 mt-1" id="statMonthSpent">₹0.00</h3>
+                        </div>
+                        <i class="fa-solid fa-calendar-check fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-warning text-dark shadow-sm p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-dark-50 text-uppercase fw-bold">Active Alerts (>90%)</small>
+                            <h3 class="fw-bold mb-0 mt-1" id="statAlertsCount">0</h3>
+                        </div>
+                        <i class="fa-solid fa-bell fa-2x text-dark-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-info text-white shadow-sm p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-white-50 text-uppercase fw-bold">Registered Users / Categories</small>
+                            <h3 class="fw-bold mb-0 mt-1" id="statUsersCats">0 / 0</h3>
+                        </div>
+                        <i class="fa-solid fa-users fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Alerts Banner -->
+        <div id="alertsBannerContainer" class="mb-4 d-none">
+            <div class="alert alert-warning border-warning shadow-sm" role="alert">
+                <h5 class="alert-heading fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>Active Budget Alerts Detected!</h5>
+                <div id="alertsList"></div>
+            </div>
+        </div>
+
+        <!-- Row 2: Category Budget Breakdown & Log Expense Form -->
+        <div class="row g-4 mb-4">
+            
+            <!-- Category Budget Progress -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Current Month Category Budgets (₹)</h5>
+                    </div>
+                    <div class="card-body" id="categorySummaryContainer">
+                        <p class="text-muted text-center py-4">Loading category summaries...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Expense Form -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white py-3 border-0">
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-plus-circle me-2"></i>Log New Expense</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="addExpenseForm" onsubmit="handleAddExpense(event)">
+                            <div class="mb-3">
+                                <label for="expCategory" class="form-label fw-semibold">Category</label>
+                                <select id="expCategory" class="form-select" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="expAmount" class="form-label fw-semibold">Amount (₹)</label>
+                                <input type="number" step="0.01" min="0.01" class="form-control" id="expAmount" placeholder="e.g. 500.00" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="expDate" class="form-label fw-semibold">Expense Date</label>
+                                <input type="date" class="form-control" id="expDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="expDescription" class="form-label fw-semibold">Description</label>
+                                <input type="text" class="form-control" id="expDescription" placeholder="e.g. Bus pass / Stationery">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2"><i class="fa-solid fa-paper-plane me-1"></i> Submit Expense</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Month-over-Month Trend Chart & Recent Expenses Table -->
+        <div class="row g-4">
+            
+            <!-- Month-over-Month Trend Chart -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Month-over-Month Spending Trend (₹)</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trendChart" height="220"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Expenses Table -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-list-check me-2 text-primary"></i>Recent Expenses</h5>
+                        <small class="text-muted">Latest transactions</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Description</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    <tr><td colspan="5" class="text-center py-4 text-muted">Loading expenses...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Script -->
+    <script>
+        let currentUserId = 1;
+        let trendChartInstance = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("expDate").valueAsDate = new Date();
+            loadUsers();
+            loadCategories();
+        });
+
+        async function loadUsers() {
+            try {
+                const res = await fetch("/api/users");
+                const users = await res.json();
+                const userSelect = document.getElementById("userSelect");
+                userSelect.innerHTML = "";
+                users.forEach(u => {
+                    const opt = document.createElement("option");
+                    opt.value = u.id;
+                    opt.textContent = `${u.name} (${u.email})`;
+                    userSelect.appendChild(opt);
+                });
+                if (users.length > 0) {
+                    currentUserId = users[0].id;
+                    userSelect.value = currentUserId;
+                }
+                loadDashboardData();
+            } catch (err) {
+                console.error("Error loading users:", err);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch("/api/categories");
+                const categories = await res.json();
+                const catSelect = document.getElementById("expCategory");
+                catSelect.innerHTML = "";
+                categories.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    catSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Error loading categories:", err);
+            }
+        }
+
+        async function loadDashboardData() {
+            currentUserId = document.getElementById("userSelect").value || 1;
+            await Promise.all([
+                fetchGlobalStats(),
+                fetchCategorySummary(),
+                fetchAlerts(),
+                fetchTrends(),
+                fetchExpenses()
+            ]);
+        }
+
+        async function fetchGlobalStats() {
+            try {
+                const res = await fetch("/api/dashboard");
+                const data = await res.json();
+                document.getElementById("statAllTimeSpent").textContent = `₹${data.totalExpenseAmountAllTime.toFixed(2)}`;
+                document.getElementById("statMonthSpent").textContent = `₹${data.currentMonthTotalExpenseAmount.toFixed(2)}`;
+                document.getElementById("statUsersCats").textContent = `${data.totalUsers} Users / ${data.totalCategories} Categories`;
+            } catch (err) {
+                console.error("Error fetching stats:", err);
+            }
+        }
+
+        async function fetchCategorySummary() {
+            try {
+                const res = await fetch(`/api/users/${currentUserId}/summary/current-month`);
+                const data = await res.json();
+                const container = document.getElementById("categorySummaryContainer");
+                
+                if (!data.categorySummaries || data.categorySummaries.length === 0) {
+                    container.innerHTML = `<p class="text-muted text-center py-3">No categories found.</p>`;
+                    return;
+                }
+
+                let html = "";
+                data.categorySummaries.forEach(cat => {
+                    const limit = cat.monthlyLimit ? `₹${cat.monthlyLimit.toFixed(2)}` : "No limit";
+                    const spent = `₹${cat.spentAmount.toFixed(2)}`;
+                    const pct = cat.percentUsed ? Math.min(cat.percentUsed, 100).toFixed(1) : 0;
+                    const statusClass = `badge-status-${cat.budgetStatus || 'NORMAL'}`;
+
+                    let barColor = "bg-success";
+                    if (cat.budgetStatus === "WARNING") barColor = "bg-warning";
+                    if (cat.budgetStatus === "EXCEEDED") barColor = "bg-danger";
+
+                    html += `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold">${cat.categoryName}</span>
+                                <div>
+                                    <span class="text-muted me-2">${spent} / ${limit}</span>
+                                    <span class="badge ${statusClass}">${cat.budgetStatus || 'NORMAL'}</span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar ${barColor}" role="progressbar" style="width: ${pct}%">${pct}%</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch (err) {
+                console.error("Error fetching summary:", err);
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const res = await fetch(`/api/users/${currentUserId}/alerts`);
+                const alerts = await res.json();
+                const banner = document.getElementById("alertsBannerContainer");
+                const alertsList = document.getElementById("alertsList");
+                document.getElementById("statAlertsCount").textContent = alerts.length;
+
+                if (alerts.length === 0) {
+                    banner.classList.add("d-none");
+                    return;
+                }
+
+                banner.classList.remove("d-none");
+                let html = "<ul class='mb-0 me-3'>";
+                alerts.forEach(a => {
+                    html += `<li><strong>${a.categoryName}</strong>: Spent ₹${a.spentAmount.toFixed(2)} of ₹${a.monthlyLimit.toFixed(2)} (${a.percentUsed.toFixed(1)}% used - <span class="badge badge-status-${a.status}">${a.status}</span>)</li>`;
+                });
+                html += "</ul>";
+                alertsList.innerHTML = html;
+            } catch (err) {
+                console.error("Error fetching alerts:", err);
+            }
+        }
+
+        async function fetchTrends() {
+            try {
+                const res = await fetch(`/api/users/${currentUserId}/trend?months=6`);
+                const data = await res.json();
+
+                const labels = data.trends.map(t => t.yearMonth);
+                const totals = data.trends.map(t => t.totalSpent);
+
+                const ctx = document.getElementById("trendChart").getContext("2d");
+                if (trendChartInstance) {
+                    trendChartInstance.destroy();
+                }
+
+                trendChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Monthly Total Spend (₹)',
+                            data: totals,
+                            backgroundColor: 'rgba(13, 110, 253, 0.75)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            } catch (err) {
+                console.error("Error fetching trends:", err);
+            }
+        }
+
+        async function fetchExpenses() {
+            try {
+                const res = await fetch(`/api/expenses?userId=${currentUserId}&page=0&size=6&sortBy=expenseDate&sortDir=DESC`);
+                const page = await res.json();
+                const tbody = document.getElementById("expensesTableBody");
+
+                if (!page.content || page.content.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No expenses recorded yet.</td></tr>`;
+                    return;
+                }
+
+                let html = "";
+                page.content.forEach(e => {
+                    html += `
+                        <tr>
+                            <td>${e.expenseDate}</td>
+                            <td><span class="badge bg-secondary">${e.categoryName}</span></td>
+                            <td class="fw-bold text-primary">₹${e.amount.toFixed(2)}</td>
+                            <td>${e.description || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense(${e.id})">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } catch (err) {
+                console.error("Error fetching expenses:", err);
+            }
+        }
+
+        async function handleAddExpense(event) {
+            event.preventDefault();
+            const payload = {
+                userId: parseInt(currentUserId),
+                categoryId: parseInt(document.getElementById("expCategory").value),
+                amount: parseFloat(document.getElementById("expAmount").value),
+                expenseDate: document.getElementById("expDate").value,
+                description: document.getElementById("expDescription").value
+            };
+
+            try {
+                const res = await fetch("/api/expenses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    document.getElementById("expAmount").value = "";
+                    document.getElementById("expDescription").value = "";
+                    loadDashboardData();
+                } else {
+                    const err = await res.json();
+                    alert(`Error: ${err.message || 'Failed to add expense'}`);
+                }
+            } catch (err) {
+                console.error("Error adding expense:", err);
+                alert("Network error occurred.");
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm("Are you sure you want to delete this expense?")) return;
+            try {
+                const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+                if (res.status === 204 || res.ok) {
+                    loadDashboardData();
+                } else {
+                    alert("Failed to delete expense.");
+                }
+            } catch (err) {
+                console.error("Error deleting expense:", err);
+            }
+        }
+    </script>
+</body>
+</html>

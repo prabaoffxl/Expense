@@ -1,0 +1,148 @@
+{
+	"info": {
+		"_postman_id": "a7b8c9d0-e1f2-3456-7890-abcdef123456",
+		"name": "ExpenseJar REST API Collection",
+		"description": "Complete Postman Collection for ExpenseJar - Personal Expense Tracker with Categories Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Create User (Alice)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Alice Smith\",\n  \"email\": \"alice.new@example.com\"\n}"
+						},
+						"url": { "raw": "http://localhost:8080/api/users", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users"] }
+					}
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/users", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users"] }
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/users/1", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users", "1"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/categories", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "categories"] }
+					}
+				},
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Books\"\n}"
+						},
+						"url": { "raw": "http://localhost:8080/api/categories", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "categories"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Budgets",
+			"item": [
+				{
+					"name": "Set Monthly Budget",
+					"request": {
+						"method": "PUT",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"categoryId\": 1,\n  \"monthlyLimit\": 500.00\n}"
+						},
+						"url": { "raw": "http://localhost:8080/api/budgets", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "budgets"] }
+					}
+				},
+				{
+					"name": "Get Budgets by User",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/budgets/user/1", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "budgets", "user", "1"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Expenses",
+			"item": [
+				{
+					"name": "Add Expense (Recalculates Budget Alert)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 1,\n  \"categoryId\": 1,\n  \"amount\": 210.00,\n  \"expenseDate\": \"2026-09-15\",\n  \"description\": \"Weekend party catering\"\n}"
+						},
+						"url": { "raw": "http://localhost:8080/api/expenses", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "expenses"] }
+					}
+				},
+				{
+					"name": "Filter & Search Expenses (Paginated)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/expenses?userId=1&page=0&size=10&sortBy=expenseDate&sortDir=DESC", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "expenses"], "query": [{ "key": "userId", "value": "1" }, { "key": "page", "value": "0" }, { "key": "size", "value": "10" }] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Summaries & Analytics",
+			"item": [
+				{
+					"name": "Current Month Summary",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/users/1/summary/current-month", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users", "1", "summary", "current-month"] }
+					}
+				},
+				{
+					"name": "Active Budget Alerts (>90% Spend)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/users/1/alerts", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users", "1", "alerts"] }
+					}
+				},
+				{
+					"name": "Month-over-Month Spending Trend (6 Months)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/users/1/trend?months=6", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "users", "1", "trend"], "query": [{ "key": "months", "value": "6" }] }
+					}
+				},
+				{
+					"name": "Backend Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "http://localhost:8080/api/dashboard", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["api", "dashboard"] }
+					}
+				}
+			]
+		}
+	]
+}
